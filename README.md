@@ -1,42 +1,102 @@
-# sv
+# SaaS Fullstack Template
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Template SaaS otimizado para VPS de baixo custo com SvelteKit + Drizzle ORM + SQLite.
 
-## Creating a project
+## Stack Técnica
 
-If you're seeing this, you've probably already done this step. Congrats!
+| Componente | Tecnologia |
+|------------|------------|
+| Framework | SvelteKit |
+| ORM | Drizzle ORM |
+| Database | SQLite (libsql) |
+| Container | Docker Multi-stage |
+| Adapter | @sveltejs/adapter-node |
 
-```sh
-# create a new project
-npx sv create my-app
+## Quick Start
+
+```bash
+# Clone o repositório
+git clone https://github.com/fredbarretolima/saas.git
+cd saas
+
+# Suba o container de desenvolvimento
+docker-compose up dev
+
+# Acesse
+http://localhost:5173
 ```
 
-To recreate this project with the same configuration:
+## Comandos Docker
 
-```sh
-# recreate this project
-npx sv@0.12.8 create --template minimal --types ts --no-install .
+```bash
+# Desenvolvimento
+docker-compose up dev
+
+# Ver logs
+docker-compose logs -f dev
+
+# Rebuild
+docker-compose build --no-cache dev
+
+# Parar
+docker-compose down
 ```
 
-## Developing
+## Estrutura do Projeto
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+```
+├── src/
+│   ├── routes/
+│   │   ├── admin/          # Painel Admin
+│   │   │   ├── +layout.svelte
+│   │   │   ├── +page.svelte      # Dashboard
+│   │   │   ├── users/           # Gerenciamento de usuários
+│   │   │   └── settings/        # Configurações
+│   │   └── +page.svelte        # Landing page
+│   └── lib/server/db/      # Schema Drizzle
+├── Dockerfile             # Produção (multi-stage)
+├── Dockerfile.dev         # Desenvolvimento
+├── docker-compose.yml     # Orquestração
+└── drizzle.config.ts      # Configuração ORM
 ```
 
-## Building
+## Database
 
-To create a production version of your app:
+```bash
+# Gerar migrations
+docker-compose exec dev npx drizzle-kit generate
 
-```sh
-npm run build
+# Aplicar mudanças
+docker-compose exec dev npx drizzle-kit push
+
+# Abrir Drizzle Studio
+docker-compose exec dev npx drizzle-kit studio
 ```
 
-You can preview the production build with `npm run preview`.
+## Produção
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```bash
+# Build imagem
+docker build -t saas-prod .
+
+# Run
+docker run -p 3000:3000 -v ./data:/app/data saas-prod
+```
+
+## Variáveis de Ambiente
+
+```env
+DATABASE_URL=file:./data/app.db
+NODE_ENV=production
+PORT=3000
+```
+
+## Features
+
+- Dashboard administrativo estilo AdminLTE
+- Sidebar responsivo com navegação
+- Página de gerenciamento de usuários
+- Configurações com tabs (General, Security, Notifications, Appearance)
+- Gráficos e tabelas de dados
+- SQLite persistente via Docker volume
+- Build otimizado (~200MB imagem final)
