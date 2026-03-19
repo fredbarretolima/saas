@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  # ================================
+  # Development Service
+  # ================================
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: saas_dev
+    ports:
+      - "5173:5173"   # Vite dev server
+      - "3000:3000"   # Node server (if running)
+    volumes:
+      - .:/app:rw     # Mount source code (live reload)
+      - saas_data:/app/data  # Persist SQLite database
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./data/app.db
+      - PORT=5173
+    restart: unless-stopped
+    networks:
+      - saas_network
+
+  # ================================
+  # Production Service (Optional)
+  # ================================
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: saas_prod
+    ports:
+      - "3000:3000"
+    volumes:
+      - saas_prod_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./data/app.db
+      - PORT=3000
+    restart: unless-stopped
+    networks:
+      - saas_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+# ================================
+# Volumes (Persistent Data)
+# ================================
+volumes:
+  saas_data:
+    driver: local
+  saas_prod_data:
+    driver: local
+
+# ================================
+# Networks
+# ================================
+networks:
+  saas_network:
+    driver: bridge

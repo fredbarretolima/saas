@@ -1,0 +1,26 @@
+# ================================
+# DEVELOPMENT DOCKERFILE
+# Node-Alpine + Development Mode
+# ================================
+FROM node:20-alpine
+
+RUN apk add --no-cache python3 make g++ git
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+
+RUN mkdir -p /app/data && chown -R node:node /app
+
+ENV NODE_ENV=development
+ENV PORT=5173
+ENV DATABASE_URL=file:./data/app.db
+
+EXPOSE 5173
+
+USER node
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,0 +1,16 @@
+node_modules
+build
+.svelte-kit
+dist
+.cache
+.data
+*.log
+.env
+.env.*
+!.env.example
+drizzle
+coverage
+.DS_Store
+*.db
+*.db-journal
+data
