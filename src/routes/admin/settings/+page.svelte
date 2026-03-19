@@ -1,20 +1,24 @@
 <script lang="ts">
-	let activeTab = $state('general');
+	import { currentTranslations } from '$lib/i18n';
 	
-	const tabs = [
-		{ id: 'general', label: 'General', icon: '⚙️' },
-		{ id: 'security', label: 'Security', icon: '🔒' },
-		{ id: 'notifications', label: 'Notifications', icon: '🔔' },
-		{ id: 'appearance', label: 'Appearance', icon: '🎨' }
-	];
+	const t = $derived($currentTranslations);
+	
+	const tabs = $derived([
+		{ id: 'general', icon: '⚙️' },
+		{ id: 'security', icon: '🔒' },
+		{ id: 'notifications', icon: '🔔' },
+		{ id: 'appearance', icon: '🎨' }
+	]);
+	
+	let activeTab = $state('general');
 </script>
 
 <svelte:head>
-	<title>Settings - Admin</title>
+	<title>{t.settings.title} - Admin</title>
 </svelte:head>
 
 <div class="page-header">
-	<h1>Settings</h1>
+	<h1>{t.settings.title}</h1>
 </div>
 
 <div class="settings-container">
@@ -26,7 +30,7 @@
 				onclick={() => activeTab = tab.id}
 			>
 				<span class="tab-icon">{tab.icon}</span>
-				<span class="tab-label">{tab.label}</span>
+				<span class="tab-label">{t.settings[tab.id as keyof typeof t.settings]}</span>
 			</button>
 		{/each}
 	</div>
@@ -34,84 +38,84 @@
 	<div class="settings-content">
 		{#if activeTab === 'general'}
 			<div class="settings-section">
-				<h2>General Settings</h2>
-				<p class="section-desc">Manage your application's general settings</p>
+				<h2>{t.settings.generalSettings}</h2>
+				<p class="section-desc">{t.settings.generalDesc}</p>
 				
 				<div class="form-group">
-					<label for="siteName">Site Name</label>
+					<label for="siteName">{t.settings.siteName}</label>
 					<input type="text" id="siteName" value="SaaS Application" />
 				</div>
 				
 				<div class="form-group">
-					<label for="siteUrl">Site URL</label>
+					<label for="siteUrl">{t.settings.siteUrl}</label>
 					<input type="url" id="siteUrl" value="https://example.com" />
 				</div>
 				
 				<div class="form-group">
-					<label for="email">Contact Email</label>
+					<label for="email">{t.settings.contactEmail}</label>
 					<input type="email" id="email" value="admin@example.com" />
 				</div>
 				
 				<div class="form-group">
-					<label for="timezone">Timezone</label>
+					<label for="timezone">{t.settings.timezone}</label>
 					<select id="timezone">
-						<option>UTC-5 (Eastern Time)</option>
-						<option>UTC (GMT)</option>
-						<option>UTC+1 (Central European)</option>
+						<option>{t.settings.timezones.utc5}</option>
+						<option>{t.settings.timezones.utc}</option>
+						<option>{t.settings.timezones.utc1}</option>
 					</select>
 				</div>
 				
 				<div class="form-group">
-					<label>Maintenance Mode</label>
+					<span class="toggle-label">{t.settings.maintenanceMode}</span>
 					<label class="toggle">
 						<input type="checkbox" />
 						<span class="toggle-slider"></span>
 					</label>
-					<span class="toggle-label">Enable maintenance mode</span>
+					<span class="toggle-desc">{t.settings.enableMaintenance}</span>
 				</div>
 			</div>
 		{:else if activeTab === 'security'}
 			<div class="settings-section">
-				<h2>Security Settings</h2>
-				<p class="section-desc">Configure security and authentication options</p>
+				<h2>{t.settings.securitySettings}</h2>
+				<p class="section-desc">{t.settings.securityDesc}</p>
 				
 				<div class="form-group">
-					<label>Two-Factor Authentication</label>
+					<span class="toggle-label">{t.settings.twoFactor}</span>
 					<label class="toggle">
 						<input type="checkbox" checked />
 						<span class="toggle-slider"></span>
 					</label>
-					<span class="toggle-label">Enable 2FA for all users</span>
+					<span class="toggle-desc">{t.settings.enable2FA}</span>
 				</div>
 				
 				<div class="form-group">
-					<label for="sessionTimeout">Session Timeout (minutes)</label>
+					<label for="sessionTimeout">{t.settings.sessionTimeout}</label>
 					<input type="number" id="sessionTimeout" value="30" />
 				</div>
 				
 				<div class="form-group">
-					<label for="passwordPolicy">Password Policy</label>
+					<label for="passwordPolicy">{t.settings.passwordPolicy}</label>
 					<select id="passwordPolicy">
-						<option>Strong (min 8 chars, uppercase, number, symbol)</option>
-						<option>Medium (min 6 chars)</option>
-						<option>Weak (any)</option>
+						<option>{t.settings.passwordPolicies.strong}</option>
+						<option>{t.settings.passwordPolicies.medium}</option>
+						<option>{t.settings.passwordPolicies.weak}</option>
 					</select>
 				</div>
 				
 				<div class="form-group">
-					<label>IP Whitelist</label>
-					<textarea placeholder="Enter allowed IP addresses (one per line)"></textarea>
+					<label for="ipWhitelist">{t.settings.ipWhitelist}</label>
+					<textarea id="ipWhitelist" placeholder={t.settings.ipPlaceholder}></textarea>
 				</div>
 			</div>
 		{:else if activeTab === 'notifications'}
 			<div class="settings-section">
-				<h2>Notification Settings</h2>
-				<p class="section-desc">Configure how and when you receive notifications</p>
+				<h2>{t.settings.notificationSettings}</h2>
+				<p class="section-desc">{t.settings.notificationDesc}</p>
 				
 				<div class="notification-item">
 					<div class="notification-info">
-						<strong>New User Registration</strong>
-						<p>Get notified when a new user signs up</p>
+						<strong>{t.settings.newUserRegistration}</strong>
+						<p>{t.settings.newUserRegDesc}</p>
 					</div>
 					<label class="toggle">
 						<input type="checkbox" checked />
@@ -121,8 +125,8 @@
 				
 				<div class="notification-item">
 					<div class="notification-info">
-						<strong>New Order</strong>
-						<p>Get notified when a new order is placed</p>
+						<strong>{t.settings.newOrder}</strong>
+						<p>{t.settings.newOrderDesc}</p>
 					</div>
 					<label class="toggle">
 						<input type="checkbox" checked />
@@ -132,8 +136,8 @@
 				
 				<div class="notification-item">
 					<div class="notification-info">
-						<strong>System Alerts</strong>
-						<p>Critical system notifications</p>
+						<strong>{t.settings.systemAlerts}</strong>
+						<p>{t.settings.systemAlertsDesc}</p>
 					</div>
 					<label class="toggle">
 						<input type="checkbox" checked />
@@ -143,8 +147,8 @@
 				
 				<div class="notification-item">
 					<div class="notification-info">
-						<strong>Weekly Report</strong>
-						<p>Receive weekly summary via email</p>
+						<strong>{t.settings.weeklyReport}</strong>
+						<p>{t.settings.weeklyReportDesc}</p>
 					</div>
 					<label class="toggle">
 						<input type="checkbox" />
@@ -154,32 +158,32 @@
 			</div>
 		{:else if activeTab === 'appearance'}
 			<div class="settings-section">
-				<h2>Appearance Settings</h2>
-				<p class="section-desc">Customize the look and feel of your application</p>
+				<h2>{t.settings.appearanceSettings}</h2>
+				<p class="section-desc">{t.settings.appearanceDesc}</p>
 				
 				<div class="form-group">
-					<label>Theme</label>
+					<span class="toggle-label">{t.settings.theme}</span>
 					<div class="theme-options">
 						<label class="theme-option">
 							<input type="radio" name="theme" value="light" checked />
 							<span class="theme-preview light">☀️</span>
-							<span>Light</span>
+							<span>{t.settings.light}</span>
 						</label>
 						<label class="theme-option">
 							<input type="radio" name="theme" value="dark" />
 							<span class="theme-preview dark">🌙</span>
-							<span>Dark</span>
+							<span>{t.settings.dark}</span>
 						</label>
 						<label class="theme-option">
 							<input type="radio" name="theme" value="auto" />
 							<span class="theme-preview auto">🖥️</span>
-							<span>Auto</span>
+							<span>{t.settings.auto}</span>
 						</label>
 					</div>
 				</div>
 				
 				<div class="form-group">
-					<label>Accent Color</label>
+					<span class="toggle-label">{t.settings.accentColor}</span>
 					<div class="color-options">
 						<span class="color-option active" style="background: #667eea;"></span>
 						<span class="color-option" style="background: #f56565;"></span>
@@ -190,19 +194,19 @@
 				</div>
 				
 				<div class="form-group">
-					<label>Compact Mode</label>
+					<span class="toggle-label">{t.settings.compactMode}</span>
 					<label class="toggle">
 						<input type="checkbox" />
 						<span class="toggle-slider"></span>
 					</label>
-					<span class="toggle-label">Reduce spacing and padding</span>
+					<span class="toggle-desc">{t.settings.reduceSpacing}</span>
 				</div>
 			</div>
 		{/if}
 		
 		<div class="form-actions">
-			<button class="btn btn-secondary">Cancel</button>
-			<button class="btn btn-primary">Save Changes</button>
+			<button class="btn btn-secondary">{t.common.cancel}</button>
+			<button class="btn btn-primary">{t.common.saveChanges}</button>
 		</div>
 	</div>
 </div>
@@ -292,6 +296,20 @@
 		margin-bottom: 8px;
 	}
 	
+	.toggle-label {
+		font-weight: 500;
+		color: #333;
+		margin-bottom: 8px;
+		display: block;
+	}
+	
+	.toggle-desc {
+		display: block;
+		color: #666;
+		font-size: 14px;
+		margin-top: 8px;
+	}
+	
 	.form-group input[type="text"],
 	.form-group input[type="email"],
 	.form-group input[type="url"],
@@ -321,6 +339,8 @@
 		display: inline-block;
 		width: 50px;
 		height: 26px;
+		vertical-align: middle;
+		margin-left: 10px;
 	}
 	
 	.toggle input {
@@ -361,12 +381,6 @@
 		transform: translateX(24px);
 	}
 	
-	.toggle-label {
-		margin-left: 10px;
-		color: #666;
-		vertical-align: middle;
-	}
-	
 	.notification-item {
 		display: flex;
 		justify-content: space-between;
@@ -390,6 +404,7 @@
 	.theme-options {
 		display: flex;
 		gap: 15px;
+		margin-top: 10px;
 	}
 	
 	.theme-option {
@@ -438,6 +453,7 @@
 	.color-options {
 		display: flex;
 		gap: 10px;
+		margin-top: 10px;
 	}
 	
 	.color-option {

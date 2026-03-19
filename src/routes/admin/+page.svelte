@@ -1,12 +1,14 @@
 <script lang="ts">
+	import { currentTranslations } from '$lib/i18n';
+	
+	const t = $derived($currentTranslations);
 </script>
 
 <svelte:head>
-	<title>Dashboard - Admin</title>
+	<title>{t.dashboard.title} - Admin</title>
 </svelte:head>
 
 <div class="dashboard">
-	<!-- Info Boxes Row -->
 	<div class="row">
 		<div class="col-md-3">
 			<div class="info-box" style="border-left: 4px solid #667eea;">
@@ -14,7 +16,7 @@
 					👥
 				</div>
 				<div class="info-box-content">
-					<p class="info-box-text">Total Users</p>
+					<p class="info-box-text">{t.dashboard.totalUsers}</p>
 					<h3 class="info-box-number">1,234</h3>
 				</div>
 			</div>
@@ -26,7 +28,7 @@
 					📦
 				</div>
 				<div class="info-box-content">
-					<p class="info-box-text">Products</p>
+					<p class="info-box-text">{t.dashboard.products}</p>
 					<h3 class="info-box-number">567</h3>
 				</div>
 			</div>
@@ -38,7 +40,7 @@
 					🛒
 				</div>
 				<div class="info-box-content">
-					<p class="info-box-text">Orders</p>
+					<p class="info-box-text">{t.dashboard.orders}</p>
 					<h3 class="info-box-number">89</h3>
 				</div>
 			</div>
@@ -50,23 +52,22 @@
 					💰
 				</div>
 				<div class="info-box-content">
-					<p class="info-box-text">Revenue</p>
+					<p class="info-box-text">{t.dashboard.revenue}</p>
 					<h3 class="info-box-number">$12,450</h3>
 				</div>
 			</div>
 		</div>
 	</div>
 	
-	<!-- Charts and Table Row -->
 	<div class="row">
 		<div class="col-md-8">
 			<div class="card">
 				<div class="card-header">
-					<h3 class="card-title">Revenue Overview</h3>
+					<h3 class="card-title">{t.dashboard.revenueOverview}</h3>
 					<select class="period-select">
-						<option>Last 7 days</option>
-						<option>Last 30 days</option>
-						<option>Last 90 days</option>
+						<option>{t.dashboard.last7Days}</option>
+						<option>{t.dashboard.last30Days}</option>
+						<option>{t.dashboard.last90Days}</option>
 					</select>
 				</div>
 				<div class="card-body">
@@ -97,29 +98,29 @@
 		<div class="col-md-4">
 			<div class="card">
 				<div class="card-header">
-					<h3 class="card-title">Top Products</h3>
+					<h3 class="card-title">{t.dashboard.topProducts}</h3>
 				</div>
 				<div class="card-body">
 					<div class="product-list">
 						<div class="product-item">
 							<span class="product-name">Product A</span>
-							<span class="product-sales">234 sales</span>
+							<span class="product-sales">234 {t.dashboard.sales}</span>
 						</div>
 						<div class="product-item">
 							<span class="product-name">Product B</span>
-							<span class="product-sales">189 sales</span>
+							<span class="product-sales">189 {t.dashboard.sales}</span>
 						</div>
 						<div class="product-item">
 							<span class="product-name">Product C</span>
-							<span class="product-sales">156 sales</span>
+							<span class="product-sales">156 {t.dashboard.sales}</span>
 						</div>
 						<div class="product-item">
 							<span class="product-name">Product D</span>
-							<span class="product-sales">123 sales</span>
+							<span class="product-sales">123 {t.dashboard.sales}</span>
 						</div>
 						<div class="product-item">
 							<span class="product-name">Product E</span>
-							<span class="product-sales">98 sales</span>
+							<span class="product-sales">98 {t.dashboard.sales}</span>
 						</div>
 					</div>
 				</div>
@@ -127,31 +128,30 @@
 		</div>
 	</div>
 	
-	<!-- Recent Orders Table -->
 	<div class="row">
 		<div class="col-12">
 			<div class="card">
 				<div class="card-header">
-					<h3 class="card-title">Recent Orders</h3>
-					<a href="/admin/orders" class="btn-link">View All →</a>
+					<h3 class="card-title">{t.dashboard.recentOrders}</h3>
+					<a href="/admin/orders" class="btn-link">{t.common.viewAll}</a>
 				</div>
 				<div class="card-body" style="padding: 0;">
 					<table class="data-table">
 						<thead>
 							<tr>
-								<th>Order ID</th>
-								<th>Customer</th>
-								<th>Status</th>
-								<th>Amount</th>
-								<th>Date</th>
-								<th>Actions</th>
+								<th>{t.dashboard.orderId}</th>
+								<th>{t.dashboard.customer}</th>
+								<th>{t.dashboard.status}</th>
+								<th>{t.dashboard.amount}</th>
+								<th>{t.dashboard.date}</th>
+								<th>{t.common.actions}</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
 								<td>#ORD-001</td>
 								<td>John Doe</td>
-								<td><span class="badge badge-success">Completed</span></td>
+								<td><span class="badge badge-success">{t.dashboard.completed}</span></td>
 								<td>$299.00</td>
 								<td>2026-03-18</td>
 								<td>
@@ -163,7 +163,7 @@
 							<tr>
 								<td>#ORD-002</td>
 								<td>Jane Smith</td>
-								<td><span class="badge badge-warning">Pending</span></td>
+								<td><span class="badge badge-warning">{t.dashboard.pending}</span></td>
 								<td>$149.00</td>
 								<td>2026-03-17</td>
 								<td>
@@ -175,7 +175,7 @@
 							<tr>
 								<td>#ORD-003</td>
 								<td>Bob Wilson</td>
-								<td><span class="badge badge-info">Processing</span></td>
+								<td><span class="badge badge-info">{t.dashboard.processing}</span></td>
 								<td>$459.00</td>
 								<td>2026-03-16</td>
 								<td>
@@ -187,7 +187,7 @@
 							<tr>
 								<td>#ORD-004</td>
 								<td>Alice Brown</td>
-								<td><span class="badge badge-danger">Cancelled</span></td>
+								<td><span class="badge badge-danger">{t.dashboard.cancelled}</span></td>
 								<td>$199.00</td>
 								<td>2026-03-15</td>
 								<td>

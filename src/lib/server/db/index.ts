@@ -2,10 +2,14 @@ import { drizzle } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
 import * as schema from './schema';
 
-const client = createClient({
-  url: process.env.DATABASE_URL || 'file:./data/app.db',
-});
+let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
-export const db = drizzle(client, { schema });
-
-export type Database = typeof db;
+export function getDb() {
+	if (!_db) {
+		const client = createClient({
+			url: process.env.DATABASE_URL || 'file:./saas.db',
+		});
+		_db = drizzle(client, { schema });
+	}
+	return _db;
+}

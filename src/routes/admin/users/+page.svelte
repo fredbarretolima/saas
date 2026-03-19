@@ -1,33 +1,87 @@
 <script lang="ts">
-	const users = [
-		{ id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active', date: '2026-03-15' },
-		{ id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Editor', status: 'Active', date: '2026-03-14' },
-		{ id: 3, name: 'Bob Wilson', email: 'bob@example.com', role: 'User', status: 'Active', date: '2026-03-13' },
-		{ id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'User', status: 'Inactive', date: '2026-03-12' },
-		{ id: 5, name: 'Charlie Davis', email: 'charlie@example.com', role: 'Editor', status: 'Active', date: '2026-03-11' }
-	];
+	import { invalidateAll } from '$app/navigation';
+	import { locale, currentTranslations } from '$lib/i18n';
+	import { formatDate } from '$lib/i18n/dates';
+	import { derived } from 'svelte/store';
+	
+	let { data } = $props();
+	
+	let searchQuery = $state('');
+	let showModal = $state(false);
+	let editingUser = $state<{id: string; name: string; email: string} | null>(null);
+	
+	const currentLocale = derived(locale, ($locale) => $locale);
+	const t = $derived($currentTranslations);
+	
+	const filteredUsers = $derived(
+		data.users.filter(u => 
+			u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			u.email.toLowerCase().includes(searchQuery.toLowerCase())
+		)
+	);
+	
+	function formatUserDate(dateStr: string | Date | null): string {
+		return formatDate(dateStr, $currentLocale);
+	}
+	
+	function openAddModal() {
+		editingUser = { id: '', name: '', email: '' };
+		showModal = true;
+	}
+	
+	function openEditModal(user: typeof data.users[0]) {
+		editingUser = { id: user.id, name: user.name, email: user.email };
+		showModal = true;
+	}
+	
+	function closeModal() {
+		showModal = false;
+		editingUser = null;
+	}
+	
+	async function saveUser() {
+		if (!editingUser) return;
+		
+		const method = editingUser.id ? 'PUT' : 'POST';
+		const url = editingUser.id ? `/api/users/${editingUser.id}` : '/api/users';
+		
+		await fetch(url, {
+			method,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ name: editingUser.name, email: editingUser.email })
+		});
+		
+		closeModal();
+		await invalidateAll();
+	}
+	
+	async function deleteUser(id: string) {
+		if (!confirm(t.users.confirmDelete)) return;
+		
+		await fetch(`/api/users/${id}`, { method: 'DELETE' });
+		await invalidateAll();
+	}
 </script>
 
 <svelte:head>
-	<title>Users - Admin</title>
+	<title>{t.users.title} - Admin</title>
 </svelte:head>
 
 <div class="page-header">
-	<h1>User Management</h1>
-	<button class="btn btn-primary">➕ Add New User</button>
+	<h1>{t.users.title}</h1>
+	<button class="btn btn-primary" onclick={openAddModal}>➕ {t.users.addNew}</button>
 </div>
 
 <div class="card">
 	<div class="card-header">
-		<h3 class="card-title">All Users ({users.length})</h3>
+		<h3 class="card-title">{t.users.title} ({filteredUsers.length})</h3>
 		<div class="header-actions">
-			<input type="text" placeholder="Search users..." class="search-input" />
-			<select class="filter-select">
-				<option>All Roles</option>
-				<option>Admin</option>
-				<option>Editor</option>
-				<option>User</option>
-			</select>
+			<input 
+				type="text" 
+				placeholder={t.users.search} 
+				class="search-input"
+				bind:value={searchQuery}
+			/>
 		</div>
 	</div>
 	<div class="card-body" style="padding: 0;">
@@ -35,16 +89,14 @@
 			<thead>
 				<tr>
 					<th><input type="checkbox" /></th>
-					<th>Name</th>
-					<th>Email</th>
-					<th>Role</th>
-					<th>Status</th>
-					<th>Joined</th>
-					<th>Actions</th>
+					<th>{t.users.name}</th>
+					<th>{t.users.email}</th>
+					<th>{t.users.joined}</th>
+					<th>{t.users.actions}</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each users as user}
+				{#each filteredUsers as user}
 					<tr>
 						<td><input type="checkbox" /></td>
 						<td>
@@ -54,30 +106,49 @@
 							</div>
 						</td>
 						<td>{user.email}</td>
-						<td><span class="role-badge role-{user.role.toLowerCase()}">{user.role}</span></td>
-						<td><span class="status-badge status-{user.status.toLowerCase()}">{user.status}</span></td>
-						<td>{user.date}</td>
+						<td>{formatUserDate(user.createdAt)}</td>
 						<td>
-							<button class="btn-icon" title="Edit">✏️</button>
-							<button class="btn-icon" title="View">👁️</button>
-							<button class="btn-icon btn-danger" title="Delete">🗑️</button>
+							<button class="btn-icon" title={t.users.edit} onclick={() => openEditModal(user)}>✏️</button>
+							<button class="btn-icon btn-danger" title={t.users.delete} onclick={() => deleteUser(user.id)}>🗑️</button>
 						</td>
+					</tr>
+				{:else}
+					<tr>
+						<td colspan="5" style="text-align: center; padding: 40px;">{t.users.noUsers}</td>
 					</tr>
 				{/each}
 			</tbody>
 		</table>
 	</div>
 	<div class="card-footer">
-		<span class="showing">Showing 1 to {users.length} of {users.length} entries</span>
-		<div class="pagination">
-			<button class="btn-pagination" disabled>Previous</button>
-			<button class="btn-pagination active">1</button>
-			<button class="btn-pagination">2</button>
-			<button class="btn-pagination">3</button>
-			<button class="btn-pagination">Next</button>
-		</div>
+		<span class="showing">{t.users.showing.replace('{from}', '1').replace('{to}', String(filteredUsers.length)).replace('{total}', String(data.users.length))}</span>
 	</div>
 </div>
+
+{#if showModal && editingUser}
+	<div class="modal-overlay" onclick={closeModal} onkeydown={(e) => e.key === 'Escape' && closeModal()} role="dialog" aria-modal="true" tabindex="-1">
+		<div class="modal" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="document">
+			<div class="modal-header">
+				<h2>{editingUser.id ? t.users.modalEdit : t.users.modalAdd}</h2>
+				<button class="btn-close" onclick={closeModal}>×</button>
+			</div>
+			<form onsubmit={(e) => { e.preventDefault(); saveUser(); }}>
+				<div class="form-group">
+					<label for="name">{t.users.name}</label>
+					<input type="text" id="name" bind:value={editingUser.name} required />
+				</div>
+				<div class="form-group">
+					<label for="email">{t.users.email}</label>
+					<input type="email" id="email" bind:value={editingUser.email} required />
+				</div>
+				<div class="modal-actions">
+					<button type="button" class="btn btn-secondary" onclick={closeModal}>{t.common.cancel}</button>
+					<button type="submit" class="btn btn-primary">{t.common.save}</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.page-header {
@@ -113,6 +184,11 @@
 		box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 	}
 	
+	.btn-secondary {
+		background: #e0e0e0;
+		color: #333;
+	}
+	
 	.header-actions {
 		display: flex;
 		gap: 10px;
@@ -123,13 +199,6 @@
 		border: 1px solid #ddd;
 		border-radius: 5px;
 		width: 200px;
-	}
-	
-	.filter-select {
-		padding: 8px 15px;
-		border: 1px solid #ddd;
-		border-radius: 5px;
-		background: #fff;
 	}
 	
 	.card-footer {
@@ -145,35 +214,6 @@
 		font-size: 14px;
 	}
 	
-	.pagination {
-		display: flex;
-		gap: 5px;
-	}
-	
-	.btn-pagination {
-		padding: 8px 12px;
-		border: 1px solid #ddd;
-		background: #fff;
-		border-radius: 5px;
-		cursor: pointer;
-		transition: all 0.2s;
-	}
-	
-	.btn-pagination:hover:not(:disabled) {
-		background: #f0f0f0;
-	}
-	
-	.btn-pagination.active {
-		background: #667eea;
-		color: #fff;
-		border-color: #667eea;
-	}
-	
-	.btn-pagination:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-	
 	.user-cell {
 		display: flex;
 		align-items: center;
@@ -187,45 +227,6 @@
 	.user-name {
 		font-weight: 500;
 		color: #333;
-	}
-	
-	.role-badge {
-		padding: 5px 10px;
-		border-radius: 15px;
-		font-size: 12px;
-		font-weight: 500;
-	}
-	
-	.role-admin {
-		background: #d4edda;
-		color: #155724;
-	}
-	
-	.role-editor {
-		background: #fff3cd;
-		color: #856404;
-	}
-	
-	.role-user {
-		background: #d1ecf1;
-		color: #0c5460;
-	}
-	
-	.status-badge {
-		padding: 5px 10px;
-		border-radius: 15px;
-		font-size: 12px;
-		font-weight: 500;
-	}
-	
-	.status-active {
-		background: #d4edda;
-		color: #155724;
-	}
-	
-	.status-inactive {
-		background: #f8d7da;
-		color: #721c24;
 	}
 	
 	.btn-icon {
@@ -245,6 +246,81 @@
 	.btn-danger:hover {
 		background: #f8d7da;
 		border-color: #f5c6cb;
+	}
+	
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+	
+	.modal {
+		background: #fff;
+		border-radius: 12px;
+		padding: 25px;
+		width: 100%;
+		max-width: 450px;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+	}
+	
+	.modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+	}
+	
+	.modal-header h2 {
+		margin: 0;
+		font-size: 20px;
+		color: #333;
+	}
+	
+	.btn-close {
+		background: none;
+		border: none;
+		font-size: 24px;
+		cursor: pointer;
+		color: #666;
+	}
+	
+	.form-group {
+		margin-bottom: 15px;
+	}
+	
+	.form-group label {
+		display: block;
+		margin-bottom: 5px;
+		font-weight: 500;
+		color: #333;
+	}
+	
+	.form-group input {
+		width: 100%;
+		padding: 10px 12px;
+		border: 1px solid #ddd;
+		border-radius: 6px;
+		font-size: 14px;
+		box-sizing: border-box;
+	}
+	
+	.form-group input:focus {
+		outline: none;
+		border-color: #667eea;
+	}
+	
+	.modal-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 10px;
+		margin-top: 20px;
 	}
 	
 	:global(.card) {

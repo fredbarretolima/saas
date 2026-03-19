@@ -1,32 +1,72 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { locale, currentTranslations } from '$lib/i18n';
+	import { locales } from '$lib/i18n/dates';
+	import { onMount } from 'svelte';
+	
+	const t = $derived($currentTranslations);
+	let currentLocale = $state('en');
+	
+	onMount(() => {
+		locale.init();
+		const unsub = locale.subscribe((l) => {
+			currentLocale = l;
+		});
+		return unsub;
+	});
+	
+	function changeLocale(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		locale.set(target.value as keyof typeof locales);
+	}
+	
+	async function goToDashboard() {
+		const res = await fetch('/api/auth/me');
+		if (res.ok) {
+			goto('/admin');
+		} else {
+			goto('/login');
+		}
+	}
+</script>
+
 <svelte:head>
 	<title>SaaS App - Fullstack Template</title>
 </svelte:head>
 
 <div class="landing">
+	<div class="locale-selector">
+		<select value={currentLocale} onchange={changeLocale}>
+			{#each Object.entries(locales) as [key, lang]}
+				<option value={key}>{lang.name}</option>
+			{/each}
+		</select>
+	</div>
+	
 	<div class="hero">
-		<h1>🚀 SaaS Fullstack Template</h1>
-		<p>High-performance application built with SvelteKit + Drizzle ORM + SQLite</p>
+		<h1>🚀 {t.landing.title}</h1>
+		<p>{t.landing.subtitle}</p>
 		<div class="cta-buttons">
-			<a href="/admin" class="btn btn-primary">Go to Dashboard →</a>
-			<a href="/admin/settings" class="btn btn-secondary">Settings</a>
+			<button onclick={goToDashboard} class="btn btn-primary">{t.landing.goToDashboard}</button>
+			<a href="/login" class="btn btn-secondary">{t.landing.login}</a>
 		</div>
 	</div>
 	
 	<div class="features">
 		<div class="feature-card">
 			<div class="feature-icon">⚡</div>
-			<h3>Lightning Fast</h3>
-			<p>SvelteKit with server-side rendering for optimal performance</p>
+			<h3>{t.landing.featureFast}</h3>
+			<p>{t.landing.featureFastDesc}</p>
 		</div>
 		<div class="feature-card">
 			<div class="feature-icon">🐳</div>
-			<h3>Docker Ready</h3>
-			<p>Full Docker setup for development and production</p>
+			<h3>{t.landing.featureDocker}</h3>
+			<p>{t.landing.featureDockerDesc}</p>
 		</div>
 		<div class="feature-card">
 			<div class="feature-icon">🗄️</div>
-			<h3>SQLite + Drizzle</h3>
-			<p>Lightweight database with type-safe ORM</p>
+			<h3>{t.landing.featureDb}</h3>
+			<p>{t.landing.featureDbDesc}</p>
 		</div>
 	</div>
 </div>
@@ -41,6 +81,28 @@
 		justify-content: center;
 		padding: 40px 20px;
 		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+		position: relative;
+	}
+	
+	.locale-selector {
+		position: absolute;
+		top: 20px;
+		right: 20px;
+	}
+	
+	.locale-selector select {
+		padding: 8px 12px;
+		border: 1px solid rgba(255,255,255,0.3);
+		border-radius: 8px;
+		background: rgba(255,255,255,0.1);
+		color: #fff;
+		cursor: pointer;
+		backdrop-filter: blur(10px);
+	}
+	
+	.locale-selector select option {
+		color: #333;
+		background: #fff;
 	}
 	
 	.hero {
@@ -75,6 +137,8 @@
 		font-weight: 600;
 		font-size: 16px;
 		transition: all 0.3s ease;
+		cursor: pointer;
+		border: none;
 	}
 	
 	.btn-primary {

@@ -1,29 +1,55 @@
 <script lang="ts">
-	let { children } = $props();
+	import { page } from '$app/state';
+	import { locale, currentTranslations } from '$lib/i18n';
+	import { locales } from '$lib/i18n/dates';
+	import { onMount } from 'svelte';
+	
+	let { data, children } = $props();
 	
 	let sidebarOpen = $state(true);
-	let activeMenu = $state('dashboard');
+	let currentLocale = $state('en');
 	
-	const menuItems = [
-		{ id: 'dashboard', label: 'Dashboard', icon: '📊', href: '/admin' },
-		{ id: 'users', label: 'Users', icon: '👥', href: '/admin/users' },
-		{ id: 'products', label: 'Products', icon: '📦', href: '/admin/products' },
-		{ id: 'orders', label: 'Orders', icon: '🛒', href: '/admin/orders' },
-		{ id: 'reports', label: 'Reports', icon: '📈', href: '/admin/reports' },
-		{ id: 'settings', label: 'Settings', icon: '⚙️', href: '/admin/settings' }
-	];
+	const t = $derived($currentTranslations);
+	
+	onMount(() => {
+		locale.init();
+		const unsub = locale.subscribe((l) => {
+			currentLocale = l;
+		});
+		return unsub;
+	});
+	
+	const menuItems = $derived([
+		{ id: 'dashboard', icon: '📊', href: '/admin' },
+		{ id: 'users', icon: '👥', href: '/admin/users' },
+		{ id: 'products', icon: '📦', href: '/admin/products' },
+		{ id: 'orders', icon: '🛒', href: '/admin/orders' },
+		{ id: 'reports', icon: '📈', href: '/admin/reports' },
+		{ id: 'settings', icon: '⚙️', href: '/admin/settings' }
+	]);
+	
+	function getActiveMenu(pathname: string): string {
+		if (pathname === '/admin') return 'dashboard';
+		const match = pathname.match(/\/admin\/(\w+)/);
+		return match ? match[1] : 'dashboard';
+	}
 	
 	function toggleSidebar() {
 		sidebarOpen = !sidebarOpen;
 	}
 	
-	function setActiveMenu(id: string) {
-		activeMenu = id;
+	function changeLocale(event: Event) {
+		const target = event.target as HTMLSelectElement;
+		locale.set(target.value as keyof typeof locales);
+	}
+	
+	async function logout() {
+		await fetch('/logout', { method: 'POST' });
+		window.location.href = '/login';
 	}
 </script>
 
 <div class="admin-wrapper">
-	<!-- Sidebar -->
 	<aside class="sidebar" class:collapsed={!sidebarOpen}>
 		<div class="sidebar-header">
 			<div class="logo">
@@ -39,59 +65,50 @@
 				<a 
 					href={item.href}
 					class="nav-item"
-					class:active={activeMenu === item.id}
+					class:active={getActiveMenu(data.pathname) === item.id}
 					class:collapsed={!sidebarOpen}
-					onclick={() => setActiveMenu(item.id)}
-					title={!sidebarOpen ? item.label : ''}
+					title={!sidebarOpen ? t.nav[item.id as keyof typeof t.nav] : ''}
 				>
 					<span class="nav-icon">{item.icon}</span>
 					{#if sidebarOpen}
-						<span class="nav-label">{item.label}</span>
+						<span class="nav-label">{t.nav[item.id as keyof typeof t.nav]}</span>
 					{/if}
 				</a>
 			{/each}
 		</nav>
 	</aside>
 	
-	<!-- Main Content -->
 	<div class="main-wrapper" class:sidebar-collapsed={!sidebarOpen}>
-		<!-- Header -->
 		<header class="main-header">
 			<div class="header-left">
 				<button class="btn-toggle" onclick={toggleSidebar}>
 					<span class="toggle-icon">{sidebarOpen ? '☰' : '☷'}</span>
 				</button>
-				<h1 class="page-title">{activeMenu.charAt(0).toUpperCase() + activeMenu.slice(1)}</h1>
+				<h1 class="page-title">{getActiveMenu(data.pathname).charAt(0).toUpperCase() + getActiveMenu(data.pathname).slice(1)}</h1>
 			</div>
 			
 			<div class="header-right">
-				<div class="header-search" class:hidden={!sidebarOpen}>
-					<input type="text" placeholder="Search..." class="search-input" />
-				</div>
+				<select class="locale-select" value={currentLocale} onchange={changeLocale}>
+					{#each Object.entries(locales) as [key, lang]}
+						<option value={key}>{lang.name}</option>
+					{/each}
+				</select>
 				
-				<div class="dropdown">
-					<button class="btn-notification">
-						<span>🔔</span>
-						<span class="badge">3</span>
-					</button>
-				</div>
+				<button class="btn-logout" onclick={logout} title="Logout">
+					<span>🚪</span>
+				</button>
 				
-				<div class="dropdown user-dropdown">
-					<button class="btn-user">
-						<span class="user-avatar">👤</span>
-						<span class="user-name">Admin</span>
-						<span class="dropdown-arrow">▼</span>
-					</button>
+				<div class="user-dropdown">
+					<span class="user-avatar">👤</span>
+					<span class="user-name">{data.user?.name ?? 'User'}</span>
 				</div>
 			</div>
 		</header>
 		
-		<!-- Content -->
 		<main class="content-wrapper">
 			{@render children()}
 		</main>
 		
-		<!-- Footer -->
 		<footer class="main-footer">
 			<div class="footer-left">
 				<strong>Copyright © 2026 <a href="/">SaaS App</a>.</strong> All rights reserved.
@@ -110,7 +127,6 @@
 		font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	}
 	
-	/* Sidebar */
 	.sidebar {
 		width: 250px;
 		background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
@@ -166,10 +182,6 @@
 		padding: 12px;
 	}
 	
-	.nav-item.collapsed .nav-icon {
-		font-size: 20px;
-	}
-	
 	.nav-item.collapsed:hover::after {
 		content: attr(title);
 		position: absolute;
@@ -206,7 +218,6 @@
 		white-space: nowrap;
 	}
 	
-	/* Main Wrapper */
 	.main-wrapper {
 		flex: 1;
 		margin-left: 250px;
@@ -221,7 +232,6 @@
 		margin-left: 60px;
 	}
 	
-	/* Header */
 	.main-header {
 		background: #fff;
 		padding: 15px 25px;
@@ -264,65 +274,43 @@
 	.header-right {
 		display: flex;
 		align-items: center;
-		gap: 20px;
+		gap: 15px;
 	}
 	
-	.header-search {
-		position: relative;
-	}
-	
-	.search-input {
-		padding: 8px 15px;
+	.locale-select {
+		padding: 6px 10px;
 		border: 1px solid #ddd;
-		border-radius: 20px;
-		width: 250px;
+		border-radius: 5px;
+		background: #fff;
 		font-size: 14px;
-		transition: border-color 0.2s;
+		cursor: pointer;
 	}
 	
-	.header-search.hidden {
-		display: none;
-	}
-	
-	.search-input:focus {
+	.locale-select:focus {
 		outline: none;
 		border-color: #667eea;
 	}
 	
-	.btn-notification {
-		position: relative;
+	.btn-logout {
 		background: none;
 		border: none;
-		font-size: 20px;
+		font-size: 18px;
 		cursor: pointer;
-		padding: 5px;
-	}
-	
-	.badge {
-		position: absolute;
-		top: 0;
-		right: 0;
-		background: #ff4757;
-		color: #fff;
-		font-size: 10px;
-		padding: 2px 5px;
-		border-radius: 10px;
-	}
-	
-	.btn-user {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 5px 10px;
+		padding: 8px;
 		border-radius: 5px;
 		transition: background 0.2s;
 	}
 	
-	.btn-user:hover {
+	.btn-logout:hover {
 		background: #f0f0f0;
+	}
+	
+	.user-dropdown {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 5px 10px;
+		border-radius: 5px;
 	}
 	
 	.user-avatar {
@@ -334,18 +322,11 @@
 		color: #333;
 	}
 	
-	.dropdown-arrow {
-		font-size: 10px;
-		color: #666;
-	}
-	
-	/* Content */
 	.content-wrapper {
 		flex: 1;
 		padding: 25px;
 	}
 	
-	/* Footer */
 	.main-footer {
 		background: #fff;
 		padding: 15px 25px;
@@ -366,7 +347,6 @@
 		text-decoration: underline;
 	}
 	
-	/* Cards */
 	:global(.card) {
 		background: #fff;
 		border-radius: 10px;
@@ -393,7 +373,6 @@
 		padding: 20px;
 	}
 	
-	/* Info Boxes */
 	:global(.info-box) {
 		background: #fff;
 		border-radius: 10px;
