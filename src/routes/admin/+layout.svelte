@@ -40,7 +40,9 @@
 					href={item.href}
 					class="nav-item"
 					class:active={activeMenu === item.id}
+					class:collapsed={!sidebarOpen}
 					onclick={() => setActiveMenu(item.id)}
+					title={!sidebarOpen ? item.label : ''}
 				>
 					<span class="nav-icon">{item.icon}</span>
 					{#if sidebarOpen}
@@ -57,13 +59,13 @@
 		<header class="main-header">
 			<div class="header-left">
 				<button class="btn-toggle" onclick={toggleSidebar}>
-					<span class="toggle-icon">☰</span>
+					<span class="toggle-icon">{sidebarOpen ? '☰' : '☷'}</span>
 				</button>
-				<h1 class="page-title">@Dashboard</h1>
+				<h1 class="page-title">{activeMenu.charAt(0).toUpperCase() + activeMenu.slice(1)}</h1>
 			</div>
 			
 			<div class="header-right">
-				<div class="header-search">
+				<div class="header-search" class:hidden={!sidebarOpen}>
 					<input type="text" placeholder="Search..." class="search-input" />
 				</div>
 				
@@ -133,10 +135,7 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
-	}
-	
-	.logo-icon {
-		font-size: 24px;
+		justify-content: center;
 	}
 	
 	.logo-text {
@@ -159,6 +158,31 @@
 		border-radius: 8px;
 		margin-bottom: 5px;
 		transition: all 0.2s;
+		position: relative;
+	}
+	
+	.nav-item.collapsed {
+		justify-content: center;
+		padding: 12px;
+	}
+	
+	.nav-item.collapsed .nav-icon {
+		font-size: 20px;
+	}
+	
+	.nav-item.collapsed:hover::after {
+		content: attr(title);
+		position: absolute;
+		left: 100%;
+		margin-left: 10px;
+		background: #333;
+		color: #fff;
+		padding: 8px 12px;
+		border-radius: 5px;
+		font-size: 14px;
+		white-space: nowrap;
+		z-index: 1001;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 	}
 	
 	.nav-item:hover {
@@ -254,6 +278,10 @@
 		width: 250px;
 		font-size: 14px;
 		transition: border-color 0.2s;
+	}
+	
+	.header-search.hidden {
+		display: none;
 	}
 	
 	.search-input:focus {
